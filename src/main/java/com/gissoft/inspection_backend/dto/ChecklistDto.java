@@ -41,4 +41,25 @@ public class ChecklistDto {
     public record PublishRequest(
             String releaseNotes
     ) {}
+
+    public record UpdateTemplateRequest(
+            @NotBlank String name,
+            @NotBlank String dg,
+            @NotBlank String category,
+            @NotBlank String phaseType
+    ) {}
+
+    public record UpdateSectionRequest(
+            @NotBlank String title,
+            String description,
+            int sortOrder
+    ) {}
+    public record UpdateQuestionRequest(
+            @NotBlank String text,
+            @NotBlank String answerType,
+            boolean required,
+            int sortOrder,
+            Map<String, Object> validationsJson
+    ) {}
+
 }

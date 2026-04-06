@@ -14,25 +14,49 @@ public class PhaseService {
     private final PhaseConfigRepository repo;
     private final AuditService auditService;
 
-    public List<PhaseConfig> getPhases(String dg, String category) {
-        return repo.findByDirectorateAndCategoryAndActiveTrueOrderBySortOrderAsc(dg, category);
+    // ✅ Get categories
+    public List<String> getCategoriesByDirectorate(String dg) {
+        return repo.findDistinctCategoryByDirectorateAndActiveTrue(dg);
     }
 
+    // ✅ Get phases by DG + category
+    public List<PhaseConfig> getPhases(String dg, String category) {
+
+        // ❌ both null
+        if (dg == null && category == null) {
+            throw new IllegalArgumentException("At least one filter (dg or category) is required");
+        }
+
+        // ✅ both present
+        if (dg != null && category != null) {
+            return repo.findByDirectorateAndCategoryAndActiveTrueOrderBySortOrderAsc(dg, category);
+        }
+
+        // ✅ only dg
+        if (dg != null) {
+            return repo.findByDirectorateAndActiveTrueOrderBySortOrderAsc(dg);
+        }
+
+        // ✅ only category
+        return repo.findByCategoryAndActiveTrueOrderBySortOrderAsc(category);
+    }
+
+
+    // ✅ Create
     public PhaseConfig create(PhaseConfig phase, String actor) {
         PhaseConfig saved = repo.save(phase);
-
-        // ✅ AUDIT
         auditService.log(actor, "CREATE", "PhaseConfig", saved.getId().toString());
-
         return saved;
     }
 
+    // ✅ Bulk save
     public List<PhaseConfig> saveAll(List<PhaseConfig> phases, String actor) {
         List<PhaseConfig> saved = repo.saveAll(phases);
-
-        // ✅ AUDIT
         auditService.log(actor, "UPSERT", "PhaseConfig", "BULK");
-
         return saved;
+    }
+
+    public List<String> getPhaseTypesByDirectorate(String dg) {
+        return repo.findDistinctPhaseTypeByDirectorate(dg);
     }
 }

@@ -15,26 +15,38 @@ public class PhaseController {
 
     private final PhaseService phaseService;
 
-    // ✅ GET PHASES (no audit)
+    // ✅ Get categories by DG
+    @GetMapping("/categories")
+    public List<String> getCategories(@RequestParam String dg) {
+        return phaseService.getCategoriesByDirectorate(dg);
+    }
+
+    // ✅ Get phases by DG + category
     @GetMapping
     public List<PhaseConfig> getPhases(
-            @RequestParam String dg,
-            @RequestParam String category
+            @RequestParam(required = false) String dg,
+            @RequestParam(required = false) String category
     ) {
         return phaseService.getPhases(dg, category);
     }
 
-    // ✅ CREATE (with actor)
+
+    // ✅ Create
     @PostMapping
     public PhaseConfig create(@RequestBody PhaseConfig phase,
                               Principal principal) {
         return phaseService.create(phase, principal.getName());
     }
 
-    // ✅ BULK SAVE (with actor)
+    // ✅ Bulk save
     @PostMapping("/bulk")
     public List<PhaseConfig> bulkSave(@RequestBody List<PhaseConfig> phases,
                                       Principal principal) {
         return phaseService.saveAll(phases, principal.getName());
+    }
+
+    @GetMapping("/phase-types")
+    public List<String> getPhaseTypes(@RequestParam String dg) {
+        return phaseService.getPhaseTypesByDirectorate(dg);
     }
 }

@@ -44,4 +44,6 @@ public interface ChecklistTemplateRepository extends JpaRepository<ChecklistTemp
     int findMaxVersion(@Param("dg")        String dg,
                        @Param("category")  String category,
                        @Param("phaseType") String phaseType);
+
+    List<ChecklistTemplate> findByPhaseTypeAndStatus(String phaseType, String status);
 }

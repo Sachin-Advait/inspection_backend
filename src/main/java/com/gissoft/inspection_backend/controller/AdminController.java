@@ -138,6 +138,58 @@ public class AdminController {
         return ResponseEntity.ok(checklistService.activate(templateId, actor));
     }
 
+
+    @PutMapping("/checklists/templates/{id}")
+    public ResponseEntity<ChecklistTemplate> updateTemplate(
+            @PathVariable UUID id,
+            @RequestBody UpdateTemplateRequest req,
+            @RequestParam(defaultValue = "admin") String actor) {
+
+        return ResponseEntity.ok(checklistService.updateTemplate(id, req, actor));
+    }
+
+    @PutMapping("/checklists/sections/{sectionId}")
+    public ResponseEntity<ChecklistSection> updateSection(
+            @PathVariable UUID sectionId,
+            @RequestBody UpdateSectionRequest req,
+            @RequestParam(defaultValue = "admin") String actor) {
+
+        return ResponseEntity.ok(checklistService.updateSection(sectionId, req, actor));
+    }
+    @PutMapping("/checklists/questions/{questionId}")
+    public ResponseEntity<ChecklistQuestion> updateQuestion(
+            @PathVariable UUID questionId,
+            @RequestBody UpdateQuestionRequest req,
+            @RequestParam(defaultValue = "admin") String actor) {
+
+        return ResponseEntity.ok(checklistService.updateQuestion(questionId, req, actor));
+    }
+
+    @PatchMapping("/checklists/templates/{id}/status")
+    public ResponseEntity<ChecklistTemplate> updateStatus(
+            @PathVariable UUID id,
+            @RequestParam String status,
+            @RequestParam(defaultValue = "admin") String actor) {
+
+        return ResponseEntity.ok(checklistService.updateStatus(id, status, actor));
+    }
+
+    @GetMapping("/checklists/templates/{id}")
+    public ResponseEntity<ChecklistTemplate> getTemplateById(
+            @PathVariable UUID id) {
+
+        return ResponseEntity.ok(checklistService.getTemplateById(id));
+    }
+
+    @GetMapping("/checklists/templates/by-phase")
+    public ResponseEntity<List<ChecklistTemplate>> getByPhaseType(
+            @RequestParam String phaseType) {
+
+        return ResponseEntity.ok(
+                checklistService.getActiveByPhaseType(phaseType)
+        );
+    }
+
     // =========================================================================
     // Violations (A05 + A06)
     // =========================================================================

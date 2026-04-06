@@ -63,7 +63,7 @@ public class ChecklistService {
     @Transactional
     public ChecklistSection addSection(UUID templateId, AddSectionRequest req, String actor) {
         ChecklistTemplate template = findById(templateId);
-        assertDraft(template);
+        assertNotActive(template);;
 
         ChecklistSection section = ChecklistSection.builder()
                 .template(template)
@@ -83,7 +83,8 @@ public class ChecklistService {
     public ChecklistQuestion addQuestion(UUID sectionId, AddQuestionRequest req, String actor) {
         ChecklistSection section = sectionRepo.findById(sectionId)
                 .orElseThrow(() -> new IllegalArgumentException("Section not found: " + sectionId));
-        assertDraft(section.getTemplate());
+
+        assertNotActive(section.getTemplate());
 
         ChecklistQuestion question = ChecklistQuestion.builder()
                 .section(section)
@@ -105,7 +106,7 @@ public class ChecklistService {
     public ChecklistRule setRule(UUID questionId, SetRuleRequest req, String actor) {
         ChecklistQuestion question = questionRepo.findById(questionId)
                 .orElseThrow(() -> new IllegalArgumentException("Question not found: " + questionId));
-        assertDraft(question.getSection().getTemplate());
+        assertNotActive(question.getSection().getTemplate());
 
         ChecklistRule rule = question.getRule();
         if (rule == null) {
@@ -130,7 +131,7 @@ public class ChecklistService {
     @Transactional
     public ChecklistTemplate publish(UUID templateId, PublishRequest req, String actor) {
         ChecklistTemplate t = findById(templateId);
-        assertDraft(t);
+        assertNotActive(t);
 
         t.setStatus("PUBLISHED");
         t.setReleaseNotes(req.releaseNotes());
@@ -169,10 +170,10 @@ public class ChecklistService {
 
     // ── Helper ────────────────────────────────────────────────────────────────
 
-    private void assertDraft(ChecklistTemplate t) {
-        if (!"DRAFT".equals(t.getStatus())) {
+    private void assertNotActive(ChecklistTemplate t) {
+        if ("ACTIVE".equals(t.getStatus())) {
             throw new IllegalStateException(
-                    "Template is not in DRAFT status — cannot modify: " + t.getId());
+                    "ACTIVE checklist cannot be modified: " + t.getId());
         }
     }
 
@@ -182,7 +183,7 @@ public class ChecklistService {
                 .orElseThrow(() -> new IllegalArgumentException("Question not found: " + questionId));
 
         ChecklistTemplate template = question.getSection().getTemplate();
-        assertDraft(template);
+        assertNotActive(template);
 
         question.getSection().getQuestions().remove(question);
         questionRepo.flush();
@@ -196,7 +197,7 @@ public class ChecklistService {
                 .orElseThrow(() -> new IllegalArgumentException("Section not found: " + sectionId));
 
         ChecklistTemplate template = section.getTemplate();
-        assertDraft(template);
+        assertNotActive(template);
 
         template.getSections().remove(section);
         sectionRepo.flush();
@@ -217,5 +218,123 @@ public class ChecklistService {
         templateRepo.flush();
 
         auditService.log(actor, "DELETE_TEMPLATE", "ChecklistTemplate", templateId.toString());
+    }
+
+    @Transactional
+    public ChecklistTemplate updateTemplate(UUID id, UpdateTemplateRequest req, String actor) {
+        ChecklistTemplate t = findById(id);
+
+        if ("ACTIVE".equals(t.getStatus())) {
+            throw new IllegalStateException("Cannot edit ACTIVE checklist");
+        }
+
+        if (req.name() != null)       t.setName(req.name());
+        if (req.dg() != null)         t.setDg(req.dg());
+        if (req.category() != null)   t.setCategory(req.category());
+        if (req.phaseType() != null)  t.setPhaseType(req.phaseType());
+
+        t = templateRepo.save(t);
+
+        auditService.log(actor, "UPDATE_TEMPLATE", "ChecklistTemplate", id.toString());
+        return t;
+    }
+    @Transactional
+    public ChecklistSection updateSection(UUID sectionId, UpdateSectionRequest req, String actor) {
+        ChecklistSection section = sectionRepo.findById(sectionId)
+                .orElseThrow(() -> new IllegalArgumentException("Section not found"));
+
+        if ("ACTIVE".equals(section.getTemplate().getStatus())) {
+            throw new IllegalStateException("Cannot edit ACTIVE checklist");
+        }
+
+        if (req.title() != null)        section.setTitle(req.title());
+        if (req.description() != null)  section.setDescription(req.description());
+        if (req.sortOrder() != 0)       section.setSortOrder(req.sortOrder());
+
+        section = sectionRepo.save(section);
+
+        auditService.log(actor, "UPDATE_SECTION", "ChecklistSection", sectionId.toString());
+        return section;
+    }
+    @Transactional
+    public ChecklistQuestion updateQuestion(UUID questionId, UpdateQuestionRequest req, String actor) {
+        ChecklistQuestion q = questionRepo.findById(questionId)
+                .orElseThrow(() -> new IllegalArgumentException("Question not found"));
+
+        if ("ACTIVE".equals(q.getSection().getTemplate().getStatus())) {
+            throw new IllegalStateException("Cannot edit ACTIVE checklist");
+        }
+
+        if (req.text() != null)              q.setText(req.text());
+        if (req.answerType() != null)        q.setAnswerType(req.answerType());
+        if (req.sortOrder() != 0)            q.setSortOrder(req.sortOrder());
+        if (req.validationsJson() != null)   q.setValidationsJson(req.validationsJson());
+
+        // boolean needs special handling
+        q.setRequired(req.required());
+
+        q = questionRepo.save(q);
+
+        auditService.log(actor, "UPDATE_QUESTION", "ChecklistQuestion", questionId.toString());
+        return q;
+    }
+
+    @Transactional
+    public ChecklistTemplate updateStatus(UUID templateId, String status, String actor) {
+        ChecklistTemplate t = findById(templateId);
+
+        switch (status.toUpperCase()) {
+            case "PUBLISHED":
+
+                // Allow ACTIVE → PUBLISHED (deactivate)
+                if ("ACTIVE".equals(t.getStatus())) {
+                    t.setStatus("PUBLISHED");
+                    break;
+                }
+
+                // Existing rule
+                if (!"DRAFT".equals(t.getStatus())) {
+                    throw new IllegalStateException("Only DRAFT can be published");
+                }
+
+                t.setStatus("PUBLISHED");
+                break;
+
+            case "ACTIVE":
+                if (!"PUBLISHED".equals(t.getStatus())) {
+                    throw new IllegalStateException("Only PUBLISHED can be activated");
+                }
+
+                // deactivate existing active
+                templateRepo.findActive(t.getDg(), t.getCategory(), t.getPhaseType())
+                        .ifPresent(existing -> {
+                            existing.setStatus("RETIRED");
+                            templateRepo.save(existing);
+                        });
+
+                t.setStatus("ACTIVE");
+                break;
+
+            case "DRAFT":
+                throw new IllegalStateException("Cannot revert back to DRAFT");
+
+            default:
+                throw new IllegalArgumentException("Invalid status: " + status);
+        }
+
+        t = templateRepo.save(t);
+
+        auditService.log(actor, "UPDATE_STATUS_" + status, "ChecklistTemplate", templateId.toString());
+        return t;
+    }
+    @Transactional(readOnly = true)
+    public ChecklistTemplate getTemplateById(UUID id) {
+        return templateRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Checklist not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChecklistTemplate> getActiveByPhaseType(String phaseType) {
+        return templateRepo.findByPhaseTypeAndStatus(phaseType, "ACTIVE");
     }
 }
