@@ -44,6 +44,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
                               Pageable pageable);
 
     List<Task> findByEntityIdOrderByDueAtAsc(UUID entityId);
+    List<Task> findByEntityIdOrderByCreatedAtAsc(UUID entityId);
 
     long countByAssignedToAndStatusAndDueAtBefore(String assignedTo,
                                                    String status,

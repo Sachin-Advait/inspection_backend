@@ -1,5 +1,6 @@
 package com.gissoft.inspection_backend.services;
 
+import com.gissoft.inspection_backend.dto.TimelineDto;
 import com.gissoft.inspection_backend.entity.EntityMaster;
 import com.gissoft.inspection_backend.entity.Task;
 import com.gissoft.inspection_backend.repository.EntityMasterRepository;
@@ -63,5 +64,19 @@ public class CaseQueryService {
     public Map<String, Object> navigationLink(double lat, double lon) {
         String url = "https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lon;
         return Map.of("url", url, "lat", lat, "lon", lon);
+    }
+
+    public List<TimelineDto> getTimeline(UUID entityId) {
+        return taskRepo.findByEntityIdOrderByCreatedAtAsc(entityId)
+                .stream()
+                .map(t -> new TimelineDto(
+                        t.getPhase(),
+                        t.getStatus(),
+                        t.getAssignedTo(),
+                        t.getCompletedBy(),
+                        t.getCompletedAt(),
+                        t.getCreatedAt()
+                ))
+                .toList();
     }
 }

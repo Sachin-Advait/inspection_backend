@@ -134,6 +134,8 @@ public class InspectionService {
 
         // 🔥 COMPLETE TASK (inspection ends here)
         task.setStatus("COMPLETED");
+        task.setCompletedBy(actor);
+        task.setCompletedAt(OffsetDateTime.now());
         taskRepo.save(task);
 
         // 🔥 Create approval request if needed

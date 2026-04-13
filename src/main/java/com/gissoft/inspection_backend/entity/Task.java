@@ -76,4 +76,10 @@ public class Task {
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
+
+    @Column(name = "completed_by", length = 80)
+    private String completedBy;
+
+    @Column(name = "completed_at")
+    private OffsetDateTime completedAt;
 }
