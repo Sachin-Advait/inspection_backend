@@ -14,7 +14,6 @@ import java.time.Instant;
         name = "training_materials",
         indexes = {
                 @Index(name = "idx_training_active", columnList = "active"),
-                @Index(name = "idx_training_active", columnList = "active"),
                 @Index(name = "idx_training_cloudinary", columnList = "cloudinary_public_id")
         }
 )
@@ -71,4 +70,7 @@ public class TrainingMaterial {
     @CreatedDate
     @Column(name = "upload_date", updatable = false)
     private Instant uploadDate;
+
+    @Column(name = "due_date")
+    private Instant dueDate;
 }

@@ -1,5 +1,6 @@
 package com.gissoft.inspection_backend.controller;
 
+import com.gissoft.inspection_backend.dto.TrainingEditDTO;
 import com.gissoft.inspection_backend.dto.TrainingEngagementDTO;
 import com.gissoft.inspection_backend.dto.TrainingUploadAssignDTO;
 import com.gissoft.inspection_backend.dto.UserTrainingDTO;
@@ -108,10 +109,10 @@ public class TrainingController {
     }
 
     @GetMapping("/{trainingId}")
-    public ResponseEntity<TrainingMaterial> getTrainingById(
+    public ResponseEntity<TrainingEditDTO> getTrainingById(
             @PathVariable Long trainingId) {
 
-        TrainingMaterial material = trainingService.getTrainingById(trainingId);
+        TrainingEditDTO material = trainingService.getTrainingById(trainingId);
         return ResponseEntity.ok(material);
     }
 

@@ -1,5 +1,6 @@
 package com.gissoft.inspection_backend.services;
 
+import com.gissoft.inspection_backend.dto.TrainingEditDTO;
 import com.gissoft.inspection_backend.dto.TrainingEngagementDTO;
 import com.gissoft.inspection_backend.dto.TrainingUploadAssignDTO;
 import com.gissoft.inspection_backend.dto.UserTrainingDTO;
@@ -43,6 +44,7 @@ public class TrainingService {
                 .views(0)
                 .active(true)
                 .uploadDate(Instant.now())
+                .dueDate(request.getDueDate())
                 .build();
 
         TrainingMaterial savedMaterial = materialRepo.save(material);
@@ -291,9 +293,36 @@ public class TrainingService {
         auditService.log(actor, "DELETE_TRAINING", "TrainingMaterial", trainingId.toString());
     }
 
-    public TrainingMaterial getTrainingById(Long trainingId) {
-        return materialRepo.findByIdAndActiveTrue(trainingId)
+    public TrainingEditDTO getTrainingById(Long trainingId) {
+
+        TrainingMaterial material = materialRepo.findByIdAndActiveTrue(trainingId)
                 .orElseThrow(() -> new RuntimeException("Training not found"));
+
+        List<String> assignedUsers = assignmentRepo.findByTrainingId(trainingId)
+                .stream()
+                .map(TrainingAssignment::getUsername)
+                .toList();
+
+        return TrainingEditDTO.builder()
+                .id(String.valueOf(material.getId()))
+                .title(material.getTitle())
+                .type(material.getType())
+                .duration(material.getDuration())
+
+                .assignedTo(material.getAssignedTo())
+                .completionRate(material.getCompletionRate())
+
+                .videoProvider("cloudinary")
+                .videoPublicId(material.getCloudinaryPublicId())
+                .videoPlaybackUrl(material.getCloudinaryUrl())
+                .videoFormat(material.getCloudinaryFormat())
+                .dueDate(material.getDueDate())
+
+                .active(material.getActive())
+                .uploadDate(material.getUploadDate())
+
+                .assignedUserIds(assignedUsers)
+                .build();
     }
 
     public List<TrainingAssignment> getAssignmentsByTraining(Long trainingId) {

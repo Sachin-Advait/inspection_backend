@@ -28,6 +28,7 @@ public class ApprovalService {
     private final AuditService auditService;
     private final NoticeService noticeService;
     private final TaskRepository taskRepo;
+    private final ViolationService violationService;
 
     // ── Queue ─────────────────────────────────────────────────────────────────
 
@@ -68,6 +69,7 @@ public class ApprovalService {
 
         // 🔥 Decide notice type
         String noticeType = "FAIL".equalsIgnoreCase(outcome) ? "FINE" : "WARNING";
+        long fineAmount = violationService.calculateFine(run.getAnswers());
 
         // 🔥 Generate Notice
         Notice notice = noticeService.generate(
@@ -75,7 +77,7 @@ public class ApprovalService {
                         run.getId(),          // ✅ inspectionId FIRST
                         entity.getId(),       // ✅ entityId SECOND
                         noticeType,
-                        200L,
+                        fineAmount,
                         "EN"                  // ✅ required field
                 ),
                 actor

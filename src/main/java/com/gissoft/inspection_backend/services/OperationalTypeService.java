@@ -15,9 +15,7 @@ public class OperationalTypeService {
     private final AuditService auditService;
 
     public List<OperationalTypeConfig> get(String dg, String category, String phase) {
-        return repo.findByDirectorateAndCategoryAndPhaseTypeAndActiveTrue(
-                dg, category, phase
-        );
+        return repo.findByDirectorateAndCategoryAndActiveTrue(dg, category);
     }
 
     public List<OperationalTypeConfig> saveAll(List<OperationalTypeConfig> list, String actor) {

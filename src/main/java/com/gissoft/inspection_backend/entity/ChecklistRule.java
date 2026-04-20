@@ -29,8 +29,10 @@ public class ChecklistRule {
     @Column(name = "evidence_policy_json", columnDefinition = "jsonb")
     private Map<String, Object> evidencePolicyJson;
 
-    @Column(name = "violation_code", length = 40)
-    private String violationCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "violation_code", referencedColumnName = "code")
+    private ViolationCode violationCode;
 
     /** WARNING | FINE | CLOSURE */
     @Column(name = "default_action", length = 30)

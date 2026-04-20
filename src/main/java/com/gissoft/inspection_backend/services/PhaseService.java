@@ -1,12 +1,15 @@
 package com.gissoft.inspection_backend.services;
 
+import com.gissoft.inspection_backend.entity.OperationalTypeConfig;
 import com.gissoft.inspection_backend.entity.PhaseConfig;
+import com.gissoft.inspection_backend.repository.OperationalTypeRepository;
 import com.gissoft.inspection_backend.repository.PhaseConfigRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +17,8 @@ public class PhaseService {
 
     private final PhaseConfigRepository repo;
     private final AuditService auditService;
+    private final OperationalTypeRepository operationalRepo;
+
 
     // ✅ Get categories
     public List<String> getCategoriesByDirectorate(String dg) {
@@ -85,8 +90,25 @@ public class PhaseService {
         auditService.log(actor, "UPSERT", "PhaseConfig", "BULK_DIFF");
         return saved;
     }
-
     public List<String> getPhaseTypesByDirectorate(String dg) {
-        return repo.findDistinctPhaseTypeByDirectorate(dg);
+
+        // 🔹 Phases (licensing)
+        List<String> phases = repo
+                .findDistinctPhaseTypeByDirectorate(dg);
+
+        // 🔹 Operational types (ALL categories)
+        List<String> ops = operationalRepo
+                .findByDirectorateAndActiveTrue(dg)
+                .stream()
+                .map(OperationalTypeConfig::getType)
+                .toList();
+
+        return Stream.concat(phases.stream(), ops.stream())
+                .distinct()
+                .toList();
     }
+
+//    public List<String> getPhaseTypesByDirectorate(String dg) {
+//        return repo.findDistinctPhaseTypeByDirectorate(dg);
+//    }
 }

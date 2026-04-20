@@ -18,6 +18,7 @@ public class ChecklistService {
     private final ChecklistSectionRepository  sectionRepo;
     private final ChecklistQuestionRepository questionRepo;
     private final AuditService                auditService;
+    private final ViolationCodeRepository violationCodeRepo;
 
     // ── Mobile: get active checklist ─────────────────────────────────────────
 
@@ -114,7 +115,10 @@ public class ChecklistService {
         }
         rule.setFailSeverity(req.failSeverity());
         rule.setEvidencePolicyJson(req.evidencePolicyJson());
-        rule.setViolationCode(req.violationCode());
+        ViolationCode vc = violationCodeRepo.findByCode(req.violationCode())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid violation code"));
+
+        rule.setViolationCode(vc);
         rule.setDefaultAction(req.defaultAction());
         rule.setForceApprovalLevel(req.forceApprovalLevel());
         rule.setReinspectionSuggestionJson(req.reinspectionSuggestionJson());

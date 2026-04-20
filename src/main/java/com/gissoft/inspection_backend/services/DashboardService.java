@@ -1,14 +1,12 @@
 package com.gissoft.inspection_backend.services;
 
-import com.gissoft.inspection_backend.repository.ApprovalRequestRepository;
-import com.gissoft.inspection_backend.repository.InspectionRunRepository;
-import com.gissoft.inspection_backend.repository.NoticeRepository;
-import com.gissoft.inspection_backend.repository.TaskRepository;
+import com.gissoft.inspection_backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -18,6 +16,10 @@ public class DashboardService {
     private final InspectionRunRepository inspectionRunRepo;
     private final ApprovalRequestRepository approvalRepo;
     private final NoticeRepository noticeRepo;
+    private final InspectionRunRepository inspectionRepo;
+    private final InspectionAnswerRepository answerRepo;
+
+
     private final TaskRepository taskRepo;
     // OracleOutboxEventRepository removed — Oracle integration not active yet
 
@@ -51,5 +53,40 @@ public class DashboardService {
             long finesUnpaid,
             Map<String, Object> integrationHealth
     ) {
+    }
+
+    // ───── Chart: Pass / Fail Trend ─────
+    public List<Map<String, Object>> getTrend(OffsetDateTime from, OffsetDateTime to) {
+
+        List<Object[]> data = inspectionRepo.getOutcomeTrend(from, to);
+
+        return data.stream().map(r -> Map.of(
+                "date", r[0],
+                "outcome", r[1],
+                "count", r[2]
+        )).toList();
+    }
+
+    // ───── Top Violations ─────
+    public List<Map<String, Object>> getTopViolations() {
+
+        return answerRepo.getTopViolations().stream()
+                .map(r -> Map.of(
+                        "code", r[0],
+                        "count", r[1]
+                ))
+                .toList();
+    }
+
+    // ───── Repeat Offenders ─────
+    public List<Map<String, Object>> getRepeatOffenders() {
+
+        return inspectionRepo.getRepeatOffenders().stream()
+                .limit(10)
+                .map(r -> Map.of(
+                        "entityId", r[0],
+                        "violations", r[1]
+                ))
+                .toList();
     }
 }

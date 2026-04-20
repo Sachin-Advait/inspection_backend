@@ -382,5 +382,36 @@ public class OpsController {
 
         return ResponseEntity.ok(taskService.createDemoTask(req, actor));
     }
+//
+//
+//
+//
+//
+//    // ───── Trend API ─────
+//    @GetMapping("/ops/dashboard/trend")
+//    public ResponseEntity<?> getTrend(
+//            @RequestParam OffsetDateTime from,
+//            @RequestParam OffsetDateTime to) {
+//
+//        return ResponseEntity.ok(
+//                dashboardService.getTrend(from, to)
+//        );
+//    }
+//
+//    // ───── Top Violations ─────
+//    @GetMapping("/ops/dashboard/top-violations")
+//    public ResponseEntity<?> getTopViolations() {
+//        return ResponseEntity.ok(
+//                dashboardService.getTopViolations()
+//        );
+//    }
+//
+//    // ───── Repeat Offenders ─────
+//    @GetMapping("/ops/dashboard/repeat-offenders")
+//    public ResponseEntity<?> getRepeatOffenders() {
+//        return ResponseEntity.ok(
+//                dashboardService.getRepeatOffenders()
+//        );
+//    }
 
 }

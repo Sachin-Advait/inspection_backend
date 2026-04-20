@@ -33,4 +33,10 @@ public class ViolationCode {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Column(name = "dg", length = 20)
+    private String dg;
+
+    @Column(name = "category")
+    private String category;
 }

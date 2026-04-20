@@ -34,4 +34,25 @@ public interface InspectionRunRepository extends JpaRepository<InspectionRun, UU
 
     @Query("SELECT COUNT(i) FROM InspectionRun i WHERE i.outcome = 'FAIL' AND i.startedAt >= :since")
     long countFailsSince(@Param("since") OffsetDateTime since);
+
+    @Query("""
+        SELECT 
+            FUNCTION('DATE', i.startedAt) as day,
+            i.outcome,
+            COUNT(i)
+        FROM InspectionRun i
+        WHERE i.startedAt BETWEEN :from AND :to
+        GROUP BY FUNCTION('DATE', i.startedAt), i.outcome
+        ORDER BY day
+    """)
+    List<Object[]> getOutcomeTrend(OffsetDateTime from, OffsetDateTime to);
+
+    @Query("""
+        SELECT i.entity.id, COUNT(i)
+        FROM InspectionRun i
+        WHERE i.outcome = 'FAIL'
+        GROUP BY i.entity.id
+        ORDER BY COUNT(i) DESC
+    """)
+    List<Object[]> getRepeatOffenders();
 }

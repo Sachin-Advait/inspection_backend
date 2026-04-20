@@ -4,10 +4,7 @@ import com.gissoft.inspection_backend.dto.ChecklistDto.*;
 import com.gissoft.inspection_backend.dto.UserDto.CreateUserRequest;
 import com.gissoft.inspection_backend.dto.UserDto.UpdateUserRequest;
 import com.gissoft.inspection_backend.entity.*;
-import com.gissoft.inspection_backend.services.AuditService;
-import com.gissoft.inspection_backend.services.ChecklistService;
-import com.gissoft.inspection_backend.services.UserAdminService;
-import com.gissoft.inspection_backend.services.ViolationService;
+import com.gissoft.inspection_backend.services.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -195,10 +192,21 @@ public class AdminController {
     // =========================================================================
 
     @GetMapping("/violations/codes")
-    public ResponseEntity<List<ViolationCode>> listViolationCodes() {
+    public ResponseEntity<List<ViolationCode>> getCodes(
+            @RequestParam(required = false) String dg,
+            @RequestParam(required = false) String category
+    ) {
+
+        // 🔥 IF FILTER PROVIDED
+        if (dg != null && category != null) {
+            return ResponseEntity.ok(
+                    violationService.listCodesbyDg(dg, category)
+            );
+        }
+
+        // 🔥 DEFAULT (ALL)
         return ResponseEntity.ok(violationService.listCodes());
     }
-
     @PostMapping("/violations/codes")
     public ResponseEntity<ViolationCode> createViolationCode(
             @RequestBody ViolationCode req,
@@ -218,6 +226,7 @@ public class AdminController {
     public ResponseEntity<List<FineRule>> listFineRules() {
         return ResponseEntity.ok(violationService.listFineRules());
     }
+
 
     @PostMapping("/violations/fineRules")
     public ResponseEntity<FineRule> upsertFineRule(

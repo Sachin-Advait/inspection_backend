@@ -10,7 +10,8 @@ import java.util.UUID;
 @Repository
 public interface OperationalTypeRepository extends JpaRepository<OperationalTypeConfig, UUID> {
 
-    List<OperationalTypeConfig> findByDirectorateAndCategoryAndPhaseTypeAndActiveTrue(
-            String dg, String category, String phase
+    List<OperationalTypeConfig> findByDirectorateAndCategoryAndActiveTrue(
+            String dg, String category
     );
+    List<OperationalTypeConfig> findByDirectorateAndActiveTrue(String dg);
 }
