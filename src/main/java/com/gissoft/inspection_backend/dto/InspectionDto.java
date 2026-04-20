@@ -33,6 +33,16 @@ public class InspectionDto {
     ) {
     }
 
+    public record ViolationItem(
+            @NotBlank String code,
+            @NotBlank String severity,
+            @NotBlank String description,
+            @NotBlank String action,
+            Long fineAmount,
+            String evidenceRef
+    ) {
+    }
+
     // ── Submit ───────────────────────────────────────────────────────────────
     // outcome       — inspector-confirmed: PASS | CONDITIONAL | FAIL
     // summaryNote   — auto-generated from violation count
@@ -52,7 +62,8 @@ public class InspectionDto {
             OffsetDateTime nextDueDate,
 
             @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX")
-            OffsetDateTime followUpDate
+            OffsetDateTime followUpDate,
+            List<ViolationItem> violations
     ) {
     }
 

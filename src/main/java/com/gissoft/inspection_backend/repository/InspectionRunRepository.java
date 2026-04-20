@@ -16,18 +16,10 @@ public interface InspectionRunRepository extends JpaRepository<InspectionRun, UU
 
     List<InspectionRun> findByEntityIdOrderByStartedAtDesc(UUID entityId);
 
-    /** Returns any in-progress (not yet submitted) inspection for a task. */
+    /**
+     * Returns any in-progress (not yet submitted) inspection for a task.
+     */
     Optional<InspectionRun> findByTaskIdAndSubmittedAtIsNull(UUID taskId);
-
-    @Query("""
-        SELECT i FROM InspectionRun i
-        WHERE i.startedBy = :inspector
-          AND i.startedAt BETWEEN :from AND :to
-        ORDER BY i.startedAt DESC
-        """)
-    List<InspectionRun> findByInspectorAndPeriod(@Param("inspector") String inspector,
-                                                  @Param("from")      OffsetDateTime from,
-                                                  @Param("to")        OffsetDateTime to);
 
     @Query("SELECT COUNT(i) FROM InspectionRun i WHERE i.startedAt >= :since")
     long countSince(@Param("since") OffsetDateTime since);
@@ -36,23 +28,23 @@ public interface InspectionRunRepository extends JpaRepository<InspectionRun, UU
     long countFailsSince(@Param("since") OffsetDateTime since);
 
     @Query("""
-        SELECT 
-            FUNCTION('DATE', i.startedAt) as day,
-            i.outcome,
-            COUNT(i)
-        FROM InspectionRun i
-        WHERE i.startedAt BETWEEN :from AND :to
-        GROUP BY FUNCTION('DATE', i.startedAt), i.outcome
-        ORDER BY day
-    """)
+                SELECT
+                    FUNCTION('DATE', i.startedAt) as day,
+                    i.outcome,
+                    COUNT(i)
+                FROM InspectionRun i
+                WHERE i.startedAt BETWEEN :from AND :to
+                GROUP BY FUNCTION('DATE', i.startedAt), i.outcome
+                ORDER BY day
+            """)
     List<Object[]> getOutcomeTrend(OffsetDateTime from, OffsetDateTime to);
 
     @Query("""
-        SELECT i.entity.id, COUNT(i)
-        FROM InspectionRun i
-        WHERE i.outcome = 'FAIL'
-        GROUP BY i.entity.id
-        ORDER BY COUNT(i) DESC
-    """)
+                SELECT i.entity.id, COUNT(i)
+                FROM InspectionRun i
+                WHERE i.outcome = 'FAIL'
+                GROUP BY i.entity.id
+                ORDER BY COUNT(i) DESC
+            """)
     List<Object[]> getRepeatOffenders();
 }

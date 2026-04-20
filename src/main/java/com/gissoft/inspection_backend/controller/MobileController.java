@@ -12,7 +12,6 @@ import com.gissoft.inspection_backend.entity.EvidenceFile;
 import com.gissoft.inspection_backend.entity.InspectionRun;
 import com.gissoft.inspection_backend.entity.Task;
 import com.gissoft.inspection_backend.services.*;
-import com.gissoft.inspection_backend.workflow.TaskQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -36,7 +35,6 @@ public class MobileController {
     private final ChecklistService checklistService;
     private final InspectionService inspectionService;
     private final EvidenceService evidenceService;
-    private final TaskQueryService taskQueryService;
     private final CaseQueryService caseQueryService;
 
     // =========================================================================
@@ -187,27 +185,18 @@ public class MobileController {
                 inspectionService.saveAnswers(inspectionId, batch.answers()));
     }
 
-    /**
-     * POST /api/inspections/{inspectionId}/submit
-     * <p>
-     * FIX: old version called inspectionService.submit(inspectionId, actor, req.summaryNote())
-     * — wrong signature (actor and req swapped, only summaryNote extracted instead of
-     * passing the full SubmitRequest). The service needs the full SubmitRequest so it
-     * can read outcome, reinspectDate, nextDueDate, and followUpDate.
-     * <p>
-     * FIX: req can be null when inspector submits with no body (e.g. simple PASS with
-     * no follow-up). Guard with a null-safe empty SubmitRequest.
-     */
     @PostMapping("/inspections/{inspectionId}/submit")
     public ResponseEntity<InspectionResponse> submitInspection(
             @PathVariable UUID inspectionId,
             @RequestBody(required = false) SubmitRequest req,
             @RequestParam(defaultValue = "inspector") String actor) {
-        SubmitRequest safeReq = req != null
-                ? req
-                : new SubmitRequest(null, null, null, null, null);
+        // Pass the full SubmitRequest so the service receives outcome,
+        // reinspectDate, nextDueDate, followUpDate, and violations.
+        // Previously only summaryNote was forwarded — a bug that prevented
+        // reinspection tasks and violation persistence.
         return ResponseEntity.ok(
-                inspectionService.submit(inspectionId, safeReq, actor));
+                inspectionService.submit(inspectionId, req, actor)
+        );
     }
 
     /**
