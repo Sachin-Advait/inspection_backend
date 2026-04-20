@@ -122,7 +122,6 @@ public class InspectionService {
 
         run.setOutcome(outcome);
         run.setSubmittedAt(OffsetDateTime.now());
-        run.setSummaryNote(req.summaryNote());
 
         // 🔥 Update entity
         entity.setLastInspectionAt(run.getSubmittedAt());
@@ -185,6 +184,36 @@ public class InspectionService {
                 }
 
                 taskRepo.save(nextTask);
+            }
+        }
+
+        if (req.violations() != null && !req.violations().isEmpty()) {
+            String violationSummary = req.violations().stream()
+                    .map(v -> String.format("[%s|%s|%s|%s|%s]",
+                            v.code(),
+                            v.severity(),
+                            v.action(),
+                            v.fineAmount() != null ? "OMR" + v.fineAmount() : "0",
+                            v.evidenceRef() != null ? v.evidenceRef() : ""))
+                    .reduce("", (a, b) -> a.isEmpty() ? b : a + "," + b);
+
+            // Append to summaryNote (non-destructive — adds after inspector note)
+            String existingNote = req.summaryNote() != null ? req.summaryNote() : "";
+            run.setSummaryNote(existingNote.isEmpty()
+                    ? "VIOLATIONS:" + violationSummary
+                    : existingNote + " | VIOLATIONS:" + violationSummary);
+
+            log.info("Persisted {} violation(s) for inspection {}",
+                    req.violations().size(), inspectionId);
+
+            req.violations().forEach(v ->
+                    auditService.log(actor, "VIOLATION_RECORDED",
+                            "InspectionRun",
+                            inspectionId + "|" + v.code() + "|" + v.action()));
+        } else {
+            // No violations — just set the summary note as-is
+            if (req.summaryNote() != null) {
+                run.setSummaryNote(req.summaryNote());
             }
         }
 
