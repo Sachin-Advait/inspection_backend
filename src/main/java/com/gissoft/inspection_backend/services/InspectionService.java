@@ -148,6 +148,7 @@ public class InspectionService {
                             .build()
             );
         }
+
         // ✅ HANDLE PASS → MOVE TO NEXT PHASE
         if ("PASS".equalsIgnoreCase(outcome)) {
 
@@ -230,16 +231,21 @@ public class InspectionService {
         } else if ("CONDITIONAL".equalsIgnoreCase(outcome)) {
             noticeType = "WARNING";
         }
-
-        workflowService.startInspectionProcess(
-                10L,
-                run.getId().toString(),
-                entity.getId().toString(),
-                outcome,
-                noticeType,   // ✅ FIXED
-                actor,
-                supervisorLimit
-        );
+        long totalFine = req.violations() != null
+                ? req.violations().stream()
+                .map(v -> v.fineAmount() != null ? v.fineAmount() : 0L)
+                .reduce(0L, Long::sum)
+                : 0L;
+    if (!"PASS".equalsIgnoreCase(outcome)) {
+      workflowService.startInspectionProcess(
+          totalFine,
+          run.getId().toString(),
+          entity.getId().toString(),
+          outcome,
+          noticeType, // ✅ FIXED
+          actor,
+          supervisorLimit);
+        }
 
         run = inspectionRepo.save(run);
 
