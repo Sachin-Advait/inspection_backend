@@ -95,7 +95,7 @@ public class ApprovalService {
                 .entity(entity)
                 .taskType("REINSPECTION")
                 .subtype("REINSPECTION")
-                .phase("OPERATIONAL")
+                .phase("FOLLOW_UP")
                 .status("PENDING")
                 .priority("HIGH")
                 .sourceSystem("INTERNAL")

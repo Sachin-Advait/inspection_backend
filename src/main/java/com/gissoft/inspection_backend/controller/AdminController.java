@@ -235,25 +235,7 @@ public class AdminController {
         return ResponseEntity.ok(violationService.upsertFineRule(req, actor));
     }
 
-    // =========================================================================
-    // Config / Categories (A02)
-    // =========================================================================
 
-    @GetMapping("/config/categories")
-    public ResponseEntity<Map<String, Object>> getCategories() {
-        return ResponseEntity.ok(Map.of(
-                "TECHNICAL", Map.of(
-                        "Building", List.of("Foundation", "Structural", "MEP", "Final"),
-                        "Road", List.of("Traffic", "Excavation", "Asphalt", "Restoration"),
-                        "Lights", List.of("Base", "Cabling", "Install", "Commissioning")
-                ),
-                "HEALTH", Map.of(
-                        "Licensing", List.of("Application", "DocVerify", "PreOpen",
-                                "Reinspect", "FinalApprove"),
-                        "Operational", List.of("Routine", "Random", "Complaint", "FollowUp")
-                )
-        ));
-    }
 
     @GetMapping("/config/health-recurrence")
     public ResponseEntity<Map<String, Object>> getHealthRecurrence() {
