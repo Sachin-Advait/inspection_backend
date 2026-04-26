@@ -278,7 +278,10 @@ public class InspectionService {
 
         String dg = task.getEntity().getDirectorate();
         String category = task.getEntity().getCategory();
-        String phase = task.getPhase();
+        String phase =
+                "REINSPECTION".equalsIgnoreCase(task.getSubtype())
+                        ? "FOLLOW_UP"
+                        : task.getPhase();
 
         PhaseConfig phaseConfig = phaseRepo
                 .findByDirectorateAndCategoryAndPhaseType(dg, category, phase)
