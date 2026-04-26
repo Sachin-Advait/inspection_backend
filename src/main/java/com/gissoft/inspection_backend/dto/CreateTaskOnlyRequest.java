@@ -17,9 +17,6 @@ public record CreateTaskOnlyRequest(
         Double lon,
 
         // Task
-        @NotBlank String taskType,
-        @NotBlank String phase,
-        String subtype,
         OffsetDateTime dueAt,
         String priority
 ) {}
