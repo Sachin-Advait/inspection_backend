@@ -10,13 +10,12 @@ import java.util.UUID;
 public interface InspectionAnswerRepository extends JpaRepository<InspectionAnswer, UUID> {
 
     @Query("""
-        SELECT r.violationCode, COUNT(a)
-        FROM InspectionAnswer a
-        JOIN ChecklistQuestion q ON q.id = a.questionId
-        JOIN ChecklistRule r ON r.question = q
-        WHERE a.answer = 'FAIL'
-        GROUP BY r.violationCode
-        ORDER BY COUNT(a) DESC
-    """)
+    SELECT r.violationCode.code, r.violationCode.description, COUNT(a)
+    FROM InspectionAnswer a
+    JOIN ChecklistRule r ON r.question.id = a.questionId
+    WHERE a.answer = 'FAIL'
+    GROUP BY r.violationCode.code, r.violationCode.description
+    ORDER BY COUNT(a) DESC
+""")
     List<Object[]> getTopViolations();
 }

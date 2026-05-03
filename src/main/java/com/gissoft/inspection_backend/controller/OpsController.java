@@ -275,51 +275,7 @@ public class OpsController {
         };
     }
 
-    // ── Add these endpoints to OpsController ─────────────────────────────────────
-// These feed the Dashboard widgets visible in the web UI screenshot
 
-    // =========================================================================
-    // Dashboard widgets (O01 — additional panels)
-    // =========================================================================
-
-    /**
-     * GET /ops/top-violations?limit=5
-     * Top Violations table — code, description, count, trend (Rising/Falling)
-     */
-    @GetMapping("/ops/top-violations")
-    public ResponseEntity<List<Map<String, Object>>> getTopViolations(
-            @RequestParam(defaultValue = "5") int limit) {
-
-        // Query notices grouped by violation type to get counts
-        // For now returns violation codes with their fine rule info as a base
-        List<Map<String, Object>> result = violationService.listCodes()
-                .stream()
-                .limit(limit)
-                .map(v -> {
-                    Map<String, Object> row = new java.util.LinkedHashMap<>();
-                    row.put("code", v.getCode());
-                    row.put("description", v.getDescription());
-                    row.put("severity", v.getSeverity());
-                    row.put("count", 0);      // wire to inspection_answer aggregate later
-                    row.put("trend", "STABLE");
-                    return row;
-                })
-                .toList();
-        return ResponseEntity.ok(result);
-    }
-
-    /**
-     * GET /ops/repeat-offenders?limit=10
-     * Repeat Offenders table — entities with multiple FAIL inspections
-     */
-    @GetMapping("/ops/repeat-offenders")
-    public ResponseEntity<List<Map<String, Object>>> getRepeatOffenders(
-            @RequestParam(defaultValue = "10") int limit) {
-
-        // Entities with most FAIL inspections — aggregate query
-        // Wire to a real JPQL aggregate on inspection_run when ready
-        return ResponseEntity.ok(List.of());
-    }
 
     /**
      * GET /ops/team-today?supervisor=ahmed.ali
@@ -382,36 +338,36 @@ public class OpsController {
 
         return ResponseEntity.ok(taskService.createDemoTask(req, actor));
     }
-//
-//
-//
-//
-//
-//    // ───── Trend API ─────
-//    @GetMapping("/ops/dashboard/trend")
-//    public ResponseEntity<?> getTrend(
-//            @RequestParam OffsetDateTime from,
-//            @RequestParam OffsetDateTime to) {
-//
-//        return ResponseEntity.ok(
-//                dashboardService.getTrend(from, to)
-//        );
-//    }
-//
-//    // ───── Top Violations ─────
-//    @GetMapping("/ops/dashboard/top-violations")
-//    public ResponseEntity<?> getTopViolations() {
-//        return ResponseEntity.ok(
-//                dashboardService.getTopViolations()
-//        );
-//    }
-//
-//    // ───── Repeat Offenders ─────
-//    @GetMapping("/ops/dashboard/repeat-offenders")
-//    public ResponseEntity<?> getRepeatOffenders() {
-//        return ResponseEntity.ok(
-//                dashboardService.getRepeatOffenders()
-//        );
-//    }
+
+
+
+
+
+    // ───── Trend API ─────
+    @GetMapping("/ops/dashboard/trend")
+    public ResponseEntity<?> getTrend(
+            @RequestParam OffsetDateTime from,
+            @RequestParam OffsetDateTime to) {
+
+        return ResponseEntity.ok(
+                dashboardService.getTrend(from, to)
+        );
+    }
+
+    // ───── Top Violations ─────
+    @GetMapping("/ops/dashboard/top-violations")
+    public ResponseEntity<?> getTopViolations() {
+        return ResponseEntity.ok(
+                dashboardService.getTopViolations()
+        );
+    }
+
+    // ───── Repeat Offenders ─────
+    @GetMapping("/ops/dashboard/repeat-offenders")
+    public ResponseEntity<?> getRepeatOffenders() {
+        return ResponseEntity.ok(
+                dashboardService.getRepeatOffenders()
+        );
+    }
 
 }

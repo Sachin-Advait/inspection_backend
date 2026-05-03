@@ -16,7 +16,6 @@ public class DashboardService {
     private final InspectionRunRepository inspectionRunRepo;
     private final ApprovalRequestRepository approvalRepo;
     private final NoticeRepository noticeRepo;
-    private final InspectionRunRepository inspectionRepo;
     private final InspectionAnswerRepository answerRepo;
 
 
@@ -58,7 +57,7 @@ public class DashboardService {
     // ───── Chart: Pass / Fail Trend ─────
     public List<Map<String, Object>> getTrend(OffsetDateTime from, OffsetDateTime to) {
 
-        List<Object[]> data = inspectionRepo.getOutcomeTrend(from, to);
+        List<Object[]> data = inspectionRunRepo.getOutcomeTrend(from, to);
 
         return data.stream().map(r -> Map.of(
                 "date", r[0],
@@ -73,7 +72,8 @@ public class DashboardService {
         return answerRepo.getTopViolations().stream()
                 .map(r -> Map.of(
                         "code", r[0],
-                        "count", r[1]
+                        "description", r[1],
+                        "count", r[2]
                 ))
                 .toList();
     }
@@ -81,7 +81,7 @@ public class DashboardService {
     // ───── Repeat Offenders ─────
     public List<Map<String, Object>> getRepeatOffenders() {
 
-        return inspectionRepo.getRepeatOffenders().stream()
+        return inspectionRunRepo.getRepeatOffenders().stream()
                 .limit(10)
                 .map(r -> Map.of(
                         "entityId", r[0],

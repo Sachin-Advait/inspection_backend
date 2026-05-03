@@ -28,17 +28,16 @@ public interface InspectionRunRepository extends JpaRepository<InspectionRun, UU
     long countFailsSince(@Param("since") OffsetDateTime since);
 
     @Query("""
-                SELECT
-                    FUNCTION('DATE', i.startedAt) as day,
-                    i.outcome,
-                    COUNT(i)
-                FROM InspectionRun i
-                WHERE i.startedAt BETWEEN :from AND :to
-                GROUP BY FUNCTION('DATE', i.startedAt), i.outcome
-                ORDER BY day
-            """)
+    SELECT
+        FUNCTION('DATE', i.submittedAt),
+        i.outcome,
+        COUNT(i)
+    FROM InspectionRun i
+    WHERE i.submittedAt BETWEEN :from AND :to
+    GROUP BY FUNCTION('DATE', i.submittedAt), i.outcome
+    ORDER BY FUNCTION('DATE', i.submittedAt)
+""")
     List<Object[]> getOutcomeTrend(OffsetDateTime from, OffsetDateTime to);
-
     @Query("""
                 SELECT i.entity.id, COUNT(i)
                 FROM InspectionRun i
