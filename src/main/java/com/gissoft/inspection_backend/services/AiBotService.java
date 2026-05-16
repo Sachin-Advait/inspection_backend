@@ -53,20 +53,18 @@ public class AiBotService {
      *                     SUPERVISOR_ACTION, RECURRING_FAILURE_ANALYSIS,
      *                     INSPECTION_PRIORITIZATION
      * @param inspectionId Required for Q1, Q2, Q3. Null for Q4, Q5.
-     * @param filters      Optional: fromDate, toDate, area, inspectionType
      * @param actor        Logged-in admin username (for audit)
      */
     public AiBotResponse ask(String questionCode,
                              UUID inspectionId,
-                             AiBotFilters filters,
                              String actor) {
         try {
             Map<String, Object> payload = switch (questionCode.toUpperCase()) {
                 case "CASE_SUMMARY" -> buildCaseSummaryPayload(inspectionId);
                 case "CORRECTION_GUIDANCE" -> buildCorrectionGuidancePayload(inspectionId);
                 case "SUPERVISOR_ACTION" -> buildSupervisorActionPayload(inspectionId);
-                case "RECURRING_FAILURE_ANALYSIS" -> buildRecurringFailurePayload(filters);
-                case "INSPECTION_PRIORITIZATION" -> buildPrioritizationPayload(filters);
+                case "RECURRING_FAILURE_ANALYSIS" -> buildRecurringFailurePayload();
+                case "INSPECTION_PRIORITIZATION" -> buildPrioritizationPayload();
                 default -> throw new IllegalArgumentException(
                         "Unknown question code: " + questionCode);
             };
@@ -315,27 +313,15 @@ public class AiBotService {
     // Q4 — RECURRING FAILURE ANALYSIS
     // ─────────────────────────────────────────────────────────────────────────
 
-    private Map<String, Object> buildRecurringFailurePayload(AiBotFilters filters) {
+    private Map<String, Object> buildRecurringFailurePayload() {
 
-        OffsetDateTime from = filters != null && filters.fromDate() != null
-                ? filters.fromDate() : OffsetDateTime.now().minusMonths(3);
-        OffsetDateTime to = filters != null && filters.toDate() != null
-                ? filters.toDate() : OffsetDateTime.now();
-
-        // Get all inspections in range
-        List<InspectionRun> runs = inspectionRepo
-                .findAll()
+        // Load all submitted inspections — no filters
+        List<InspectionRun> runs = inspectionRepo.findAll()
                 .stream()
-                .filter(r -> r.getStartedAt() != null
-                        && !r.getStartedAt().isBefore(from)
-                        && !r.getStartedAt().isAfter(to))
-                .filter(r -> filters == null || filters.area() == null
-                        || filters.area().equalsIgnoreCase(r.getEntity().getDirectorate()))
-                .filter(r -> filters == null || filters.inspectionType() == null
-                        || filters.inspectionType().equalsIgnoreCase(r.getTask().getTaskType()))
-                .collect(Collectors.toList());
+                .filter(r -> r.getSubmittedAt() != null)
+                .toList();
 
-        // Aggregate failures by question
+        // Aggregate failures by question across all inspections
         Map<UUID, Long> failCountByQuestion = new LinkedHashMap<>();
         Map<UUID, String> questionText = new LinkedHashMap<>();
         Map<UUID, String> questionSeverity = new LinkedHashMap<>();
@@ -360,7 +346,7 @@ public class AiBotService {
             }
         }
 
-        // Top 10 failing questions
+        // Top 10 failing questions sorted by count
         List<Map<String, Object>> aggregated = failCountByQuestion.entrySet()
                 .stream()
                 .sorted(Map.Entry.<UUID, Long>comparingByValue().reversed())
@@ -378,11 +364,6 @@ public class AiBotService {
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("questionCode", "RECURRING_FAILURE_ANALYSIS");
-        payload.put("period", Map.of("from", from.toString(), "to", to.toString()));
-        payload.put("filters", Map.of(
-                "area", filters != null && filters.area() != null ? filters.area() : "ALL",
-                "inspectionType", filters != null && filters.inspectionType() != null ? filters.inspectionType() : "ALL"
-        ));
         payload.put("totalInspectionsAnalyzed", runs.size());
         payload.put("aggregatedFailures", aggregated);
 
@@ -393,24 +374,15 @@ public class AiBotService {
     // Q5 — INSPECTION PRIORITIZATION
     // ─────────────────────────────────────────────────────────────────────────
 
-    private Map<String, Object> buildPrioritizationPayload(AiBotFilters filters) {
+    private Map<String, Object> buildPrioritizationPayload() {
 
         OffsetDateTime today = OffsetDateTime.now();
 
-        // Fetch all pending/in-progress tasks
-        List<Task> pendingTasks = taskRepo
-                .findByFilters(
-                        filters != null ? filters.area() : null,
-                        null,   // status — we filter below
-                        null,
-                        null,
-                        null,
-                        org.springframework.data.domain.Pageable.ofSize(100)
-                )
-                .getContent()
+        // Fetch all pending/in-progress tasks — no filters
+        List<Task> pendingTasks = taskRepo.findAll()
                 .stream()
                 .filter(t -> List.of("PENDING", "IN_PROGRESS").contains(t.getStatus()))
-                .collect(Collectors.toList());
+                .toList();
 
         List<Map<String, Object>> inspections = pendingTasks.stream()
                 .map(task -> {
@@ -565,6 +537,7 @@ public class AiBotService {
                     3. Recommended assignments if applicable
                     4. Workload warning if any inspector has too many pending tasks
                     Focus on overdue, high-risk, repeat offenders, and expiring permits.
+                    Do not include raw UUIDs in the response. Use establishment name only.
                     """;
 
             default -> "You are a helpful municipal inspection assistant.";
@@ -591,14 +564,6 @@ public class AiBotService {
     // ─────────────────────────────────────────────────────────────────────────
     // INNER RECORDS  (can be moved to dto package if preferred)
     // ─────────────────────────────────────────────────────────────────────────
-
-    public record AiBotFilters(
-            OffsetDateTime fromDate,
-            OffsetDateTime toDate,
-            String area,
-            String inspectionType
-    ) {
-    }
 
     public record AiBotResponse(
             String questionCode,
