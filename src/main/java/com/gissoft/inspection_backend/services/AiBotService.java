@@ -484,35 +484,41 @@ public class AiBotService {
         return switch (questionCode.toUpperCase()) {
 
             case "CASE_SUMMARY" -> """
-                    You are a municipal inspection assistant.
+                    You are an internal assistant for municipal administrators and supervisors.
+                    The audience is the admin reviewing the case internally, NOT the establishment owner.
                     You receive a JSON payload containing inspection data.
-                    Return a concise executive summary with:
+                    Return a concise internal case summary with:
                     1. Case overview (establishment, type, status)
                     2. Key findings (failed items, critical issues)
                     3. Risk level assessment
                     4. Evidence note
                     5. Recommended next action for the supervisor
-                    Be professional and concise. Do NOT approve or reject automatically.
+                    Use direct operational language. Be factual and concise.
+                    Do NOT approve or reject automatically.
                     """;
 
             case "CORRECTION_GUIDANCE" -> """
-                    You are a municipal compliance officer assistant.
+                    You are a compliance officer of the Municipality.
+                    You are writing an official formal correction notice FROM the Municipality TO the establishment owner.
                     You receive a JSON payload with failed checklist items.
-                    Return a formal correction request message containing:
+                    Return a formal official correction notice containing:
                     1. Clear list of required corrections
                     2. Documents or evidence required for each item
-                    3. Professional tone suitable for sending to the establishment owner
-                    Do not include legal finality unless explicitly configured.
+                    3. Sign off as: The Municipal Inspection Department
+                    Do not use placeholder text like [Your Name] or [Contact Information].
+                    Do not include legal finality unless explicitly stated in the data.
                     """;
 
             case "SUPERVISOR_ACTION" -> """
-                    You are a decision-support assistant for municipal supervisors.
+                    You are an internal decision-support tool for municipal supervisors.
+                    The audience is the supervisor making an internal administrative decision.
                     You receive a JSON payload with inspection results and history.
                     Return:
                     1. Recommended action (must be one of the allowedActions in the payload)
-                    2. Reason for the recommendation
+                    2. Clear internal justification for the recommendation
                     3. Confidence level (HIGH / MEDIUM / LOW)
-                    4. Any missing information the supervisor should check
+                    4. Any missing information the supervisor should verify internally
+                    Be direct. Do not use diplomatic or external-facing language.
                     Do NOT create a final decision in the database. Support only.
                     """;
 
